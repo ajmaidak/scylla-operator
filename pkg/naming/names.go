@@ -30,6 +30,19 @@ func StatefulSetNameForRack(r scyllav1alpha1.RackSpec, c *scyllav1alpha1.ScyllaC
 	return fmt.Sprintf("%s-%s-%s", c.Name, c.Spec.Datacenter.Name, r.Name)
 }
 
+func ServiceNameFromPod(pod *corev1.Pod) string {
+	// Pod and Service has the same name
+	return pod.Name
+}
+
+func MemberServiceName(r scyllav1alpha1.RackSpec, c *scyllav1alpha1.ScyllaCluster, idx int) string {
+	return fmt.Sprintf("%s-%d", StatefulSetNameForRack(r, c), idx)
+}
+
+func ServiceDNSName(service string, c *scyllav1alpha1.ScyllaCluster) string {
+	return fmt.Sprintf("%s.%s", service, CrossNamespaceServiceNameForCluster(c))
+}
+
 func ServiceAccountNameForMembers(c *scyllav1alpha1.ScyllaCluster) string {
 	return fmt.Sprintf("%s-member", c.Name)
 }

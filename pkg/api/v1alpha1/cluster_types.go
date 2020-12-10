@@ -225,6 +225,25 @@ type ClusterStatus struct {
 	ManagerID *string               `json:"managerId,omitempty"`
 	Repairs   []RepairTaskStatus    `json:"repairs,omitempty"`
 	Backups   []BackupTaskStatus    `json:"backups,omitempty"`
+	Upgrade   *UpgradeStatus        `json:"upgrade,omitempty"`
+}
+
+// UpgradeStatus contains state of ongoing upgrade procedure.
+type UpgradeStatus struct {
+	// State reflect current state machine state.
+	State string `json:"state"`
+	// CurrentNode node under upgrade.
+	CurrentNode string `json:"currentNode,omitempty"`
+	// CurrentRack rack under upgrade.
+	CurrentRack string `json:"currentRack,omitempty"`
+	// FromVersion reflects from which version ScyllaCluster is being upgraded.
+	FromVersion string `json:"fromVersion"`
+	// ToVersion reflects to which version ScyllaCluster is being upgraded.
+	ToVersion string `json:"toVersion"`
+	// SystemSnapshotTag snapshot tag of system keyspaces.
+	SystemSnapshotTag string `json:"systemSnapshotTag,omitempty"`
+	// SystemSnapshotTag snapshot tag of data keyspaces.
+	DataSnapshotTag string `json:"dataSnapshotTag,omitempty"`
 }
 
 // RackStatus is the status of a Scylla Rack

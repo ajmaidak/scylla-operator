@@ -129,7 +129,7 @@ func podReady(pod *corev1.Pod) bool {
 }
 
 const (
-	retryInterval     = time.Second
+	retryInterval     = 200 * time.Millisecond
 	waitForPVCTimeout = 30 * time.Second
 )
 
