@@ -11,7 +11,6 @@ import (
 )
 
 func TestCheckValues(t *testing.T) {
-
 	validCluster := unit.NewSingleRackCluster(3)
 	validCluster.Spec.Datacenter.Racks[0].Resources = corev1.ResourceRequirements{
 		Limits: map[corev1.ResourceName]resource.Quantity{
@@ -22,6 +21,18 @@ func TestCheckValues(t *testing.T) {
 
 	sameName := validCluster.DeepCopy()
 	sameName.Spec.Datacenter.Racks = append(sameName.Spec.Datacenter.Racks, sameName.Spec.Datacenter.Racks[0])
+
+	nonUniqueManagerTaskNames := validCluster.DeepCopy()
+	nonUniqueManagerTaskNames.Spec.Backups = append(nonUniqueManagerTaskNames.Spec.Backups, v1alpha1.BackupTaskSpec{
+		SchedulerTaskSpec: v1alpha1.SchedulerTaskSpec{
+			Name: "task-name",
+		},
+	})
+	nonUniqueManagerTaskNames.Spec.Repairs = append(nonUniqueManagerTaskNames.Spec.Repairs, v1alpha1.RepairTaskSpec{
+		SchedulerTaskSpec: v1alpha1.SchedulerTaskSpec{
+			Name: "task-name",
+		},
+	})
 
 	tests := []struct {
 		name    string
@@ -36,6 +47,11 @@ func TestCheckValues(t *testing.T) {
 		{
 			name:    "two racks with same name",
 			obj:     sameName,
+			allowed: false,
+		},
+		{
+			name:    "non-unique names in manager tasks spec",
+			obj:     nonUniqueManagerTaskNames,
 			allowed: false,
 		},
 	}
