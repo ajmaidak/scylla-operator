@@ -13,17 +13,26 @@ spec:
       labels:
         name: raid-local-disks
     spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                - key: beta.kubernetes.io/instance-type
+                  operator: In
+                  values:
+                    - n1-standard-16
       tolerations:
         - key: role
           operator: Equal
-          value: scylla-clusters
+          value: scylla-clusters-onessd
           effect: NoSchedule
       containers:
       - name: raid-local-disks
         image: scylladb/raid-setup:0.1
         env:
           - name: RAID_DIR
-            value: "/mnt/hostfs/mnt/raid-disks/disk0"
+            value: "/mnt/hostfs/mnt/disks/md0"
           - name: DISK_MNT_DIR_PREFIX
             value: "/mnt/hostfs/mnt/disks/ssd"
           - name: DISK_DEV_PREFIX
@@ -34,15 +43,18 @@ spec:
           - "--"
         args:
           - |
-            set -e
             set -x
-
             # If the disk has already been created, sleep indefinitely
-            if [ -b "/dev/md0" ]; then
+            grep -s active /proc/mdstat
+            if [ $? -eq 0 ]; then
                 echo "raid array already created!"
+                sleep infinity
+            elif [ $? -eq 2 ]; then
+                echo "no mdstat file"
                 sleep infinity
             fi
 
+            set -e
             # Discover how many disks there are
             DISK_DEV_SUFFIX=(b c d e f g h i)
             MAX_NUM_DISKS=8
@@ -80,11 +92,12 @@ spec:
             # Waits till udev reread md0 device data
             udevadm settle
             # Format the raid array as xfs
-            mkfs.xfs /dev/md0
+            mkfs.ext4 /dev/md0
 
             # Mount the raid array in a predefined location
             mkdir -p $RAID_DIR
             mount -o noatime /dev/md0 $RAID_DIR
+            rmdir ${DISK_MNT_DIR_PREFIX}*
         securityContext:
           privileged: true
         volumeMounts:

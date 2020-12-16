@@ -2,24 +2,16 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: scylla
+  name: skinny-scylla
 
 ---
-# configuration for scylla
-apiVersion: v1
-kind: ConfigMap
-data:
-  scylla.yaml: |
-    auto_snapshot: false
-    commitlog_total_space_in_mb: 10000
 
----
 # Role for scylla members.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: scylla-cluster-member
-  namespace: scylla
+  name: benchmark-member
+  namespace: skinny-scylla
 rules:
   - apiGroups:
       - ""
@@ -58,8 +50,8 @@ rules:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: scylla-cluster-member
-  namespace: scylla
+  name: benchmark-member
+  namespace: skinny-scylla
 
 ---
 
@@ -67,16 +59,16 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: scylla-cluster-member
-  namespace: scylla
+  name: benchmark-member
+  namespace: skinny-scylla
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: scylla-cluster-member
+  name: benchmark-member
 subjects:
   - kind: ServiceAccount
-    name: scylla-cluster-member
-    namespace: scylla
+    name: benchmark-member
+    namespace: skinny-scylla
 
 ---
 
@@ -86,8 +78,8 @@ kind: ScyllaCluster
 metadata:
   labels:
     controller-tools.k8s.io: "1.0"
-  name: scylla-cluster
-  namespace: scylla
+  name: benchmark
+  namespace: skinny-scylla
 spec:
   version: 4.2.0
   agentVersion: 2.2.0
@@ -102,17 +94,17 @@ spec:
       - name: us-east4
         scyllaConfig: "scylla-config"
         scyllaAgentConfig: "scylla-agent-config"
-        members: 2
+        members: 3
         storage:
           storageClassName: "ssd"
-          capacity: 2995G
+          capacity: 100G
         resources:
           limits:
-            cpu: 30
-            memory: 115G
+            cpu: 14
+            memory: 40G
           requests:
-            cpu: 30
-            memory: 115G
+            cpu: 14
+            memory: 40G
         placement:
           nodeAffinity:
             requiredDuringSchedulingIgnoredDuringExecution:

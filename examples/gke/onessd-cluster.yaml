@@ -2,24 +2,27 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: scylla
+  name: scylla-onessd
 
 ---
 # configuration for scylla
 apiVersion: v1
 kind: ConfigMap
+metadata:
+  name: scylla-config
+  namespace: scylla-onessd
 data:
   scylla.yaml: |
     auto_snapshot: false
     commitlog_total_space_in_mb: 10000
-
 ---
+
 # Role for scylla members.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: scylla-cluster-member
-  namespace: scylla
+  name: onessd-member
+  namespace: scylla-onessd
 rules:
   - apiGroups:
       - ""
@@ -58,8 +61,8 @@ rules:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: scylla-cluster-member
-  namespace: scylla
+  name: onessd-member
+  namespace: scylla-onessd
 
 ---
 
@@ -67,16 +70,16 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: scylla-cluster-member
-  namespace: scylla
+  name: onessd-member
+  namespace: scylla-onessd
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: scylla-cluster-member
+  name: onessd-member
 subjects:
   - kind: ServiceAccount
-    name: scylla-cluster-member
-    namespace: scylla
+    name: onessd-member
+    namespace: scylla-onessd
 
 ---
 
@@ -86,8 +89,8 @@ kind: ScyllaCluster
 metadata:
   labels:
     controller-tools.k8s.io: "1.0"
-  name: scylla-cluster
-  namespace: scylla
+  name: onessd 
+  namespace: scylla-onessd
 spec:
   version: 4.2.0
   agentVersion: 2.2.0
@@ -102,17 +105,17 @@ spec:
       - name: us-east4
         scyllaConfig: "scylla-config"
         scyllaAgentConfig: "scylla-agent-config"
-        members: 2
+        members: 3
         storage:
-          storageClassName: "ssd"
-          capacity: 2995G
+          storageClassName: "local-raid-disks"
+          capacity: 100G
         resources:
           limits:
-            cpu: 30
-            memory: 115G
+            cpu: 14
+            memory: 40G
           requests:
-            cpu: 30
-            memory: 115G
+            cpu: 14
+            memory: 40G
         placement:
           nodeAffinity:
             requiredDuringSchedulingIgnoredDuringExecution:
@@ -125,5 +128,5 @@ spec:
           tolerations:
             - key: role
               operator: Equal
-              value: scylla-clusters
+              value: scylla-clusters-onessd
               effect: NoSchedule

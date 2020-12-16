@@ -1,0 +1,2 @@
+auto_snapshot: false
+commitlog_total_space_in_mb: 10000
